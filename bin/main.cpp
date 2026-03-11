@@ -1,5 +1,6 @@
 #include <iostream>
 #include <lib/argparser.h>
+#include <vector>
 
 struct Options {
     bool sum = false;
@@ -14,6 +15,7 @@ int main(int argc, char** argv) {
     Options options;
     int value;
     std::vector<int> values;
+
 
     nargparse::ArgumentParser parser = nargparse::CreateParser("labwork3");
 
@@ -49,8 +51,6 @@ int main(int argc, char** argv) {
             result *= values[i];
         }
     }
-
     std::cout << "Result: " << result << std::endl;
-
     return 0;
 }

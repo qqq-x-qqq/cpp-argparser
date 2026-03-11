@@ -7,10 +7,10 @@ namespace nargparse {
 const std::size_t kMaxArgLen = 128;
 
 enum ArgType {
-    TYPE_INT,
-    TYPE_FLOAT,
-    TYPE_STRING,
-    TYPE_BOOL
+    kTypeInt,
+    kTypeFloat,
+    kTypeString,
+    kTypeBool
 };
 
 enum NargsType {

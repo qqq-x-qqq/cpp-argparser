@@ -1,5 +1,6 @@
 #include <gtest/gtest.h>
 #include <lib/argparser.h>
+#include <cctype>
 #include <cstring>
 
 
@@ -8,15 +9,17 @@ static const size_t kMaxArgLen = 128;
 class ArgParserTest : public ::testing::Test {
 protected:
     void SetUp() override {
-        parser = nargparse::CreateParser("test_program", kMaxArgLen);
+        parser_ = nargparse::CreateParser("test_program", kMaxArgLen);
     }
 
     void TearDown() override {
-        nargparse::FreeParser(parser);
+        nargparse::FreeParser(parser_);
     }
 
-    nargparse::ArgumentParser parser;
+    nargparse::ArgumentParser parser_;
 };
+
+#define parser parser_
 
 
 bool IsEven(const int& value) {
@@ -64,21 +67,21 @@ bool IsAlphaOnly(const char* const& value) {
 
 TEST_F(ArgParserTest, EmptyParser) {
     const char* argv[] = {"program"};
-    EXPECT_TRUE(nargparse::Parse(parser, 1, argv));
+    EXPECT_TRUE(nargparse::Parse(parser_, 1, argv));
 }
 
 TEST_F(ArgParserTest, FlagArguments) {
     bool flag1 = false;
     bool flag2 = false;
 
-    nargparse::AddFlag(parser, "-f", "--flag1", &flag1, "First flag", false);
-    nargparse::AddFlag(parser, "-g", "--flag2", &flag2, "Second flag", true);
+    nargparse::AddFlag(parser_, "-f", "--flag1", &flag1, "First flag", false);
+    nargparse::AddFlag(parser_, "-g", "--flag2", &flag2, "Second flag", true);
 
     EXPECT_FALSE(flag1);
     EXPECT_TRUE(flag2);
 
     const char* argv[] = {"program", "-f", "--flag2"};
-    EXPECT_TRUE(nargparse::Parse(parser, 3, argv));
+    EXPECT_TRUE(nargparse::Parse(parser_, 3, argv));
     EXPECT_TRUE(flag1);
     EXPECT_TRUE(flag2);
 }

@@ -51,7 +51,7 @@ struct Parser
     Arg* first;
 };
 
-static char* copy_text(const char* s)
+static char* CopyText(const char* s)
 {
     if (s == nullptr)
     {
@@ -66,7 +66,7 @@ static char* copy_text(const char* s)
     return out;
 }
 
-static void copy_to_buffer(char* dst, std::size_t size, const char* src)
+static void CopyToBuffer(char* dst, std::size_t size, const char* src)
 {
     if (dst == nullptr || size == 0)
     {
@@ -89,7 +89,7 @@ static void copy_to_buffer(char* dst, std::size_t size, const char* src)
     dst[len] = '\0';
 }
 
-static void add_arg(ArgumentParser parser, Arg* arg)
+static void AddArg(ArgumentParser parser, Arg* arg)
 {
     if (parser->first == nullptr)
     {
@@ -105,7 +105,7 @@ static void add_arg(ArgumentParser parser, Arg* arg)
     cur->next = arg;
 }
 
-static Arg* make_arg(ArgType type,
+static Arg* MakeArg(ArgType type,
                      const char* short_name,
                      const char* long_name,
                      const char* name,
@@ -114,10 +114,10 @@ static Arg* make_arg(ArgType type,
                      NargsType nargs)
 {
     Arg* arg = new Arg;
-    arg->short_name = copy_text(short_name);
-    arg->long_name = copy_text(long_name);
-    arg->name = copy_text(name);
-    arg->description = copy_text(description);
+    arg->short_name = CopyText(short_name);
+    arg->long_name = CopyText(long_name);
+    arg->name = CopyText(name);
+    arg->description = CopyText(description);
     arg->type = type;
     arg->nargs = nargs;
     arg->is_flag = false;
@@ -136,14 +136,14 @@ static Arg* make_arg(ArgType type,
     return arg;
 }
 
-static void clear_arg_values(Arg* arg)
+static void ClearArgValues(Arg* arg)
 {
     if (arg == nullptr)
     {
         return;
     }
 
-    if (arg->type == TYPE_STRING)
+    if (arg->type == kTypeString)
     {
         for (int i = 0; i < arg->value_count; i++)
         {
@@ -154,9 +154,9 @@ static void clear_arg_values(Arg* arg)
     arg->value_count = 0;
 }
 
-static void reset_arg(Arg* arg)
+static void ResetArg(Arg* arg)
 {
-    clear_arg_values(arg);
+    ClearArgValues(arg);
     arg->is_set = false;
 
     if (arg->value_ptr == nullptr)
@@ -170,33 +170,33 @@ static void reset_arg(Arg* arg)
         return;
     }
 
-    if (arg->type == TYPE_INT)
+    if (arg->type == kTypeInt)
     {
         *(int*)arg->value_ptr = 0;
         return;
     }
 
-    if (arg->type == TYPE_FLOAT)
+    if (arg->type == kTypeFloat)
     {
         *(float*)arg->value_ptr = 0.0f;
         return;
     }
 
-    if (arg->type == TYPE_STRING)
+    if (arg->type == kTypeString)
     {
-        copy_to_buffer((char*)arg->value_ptr, arg->string_size, "");
+        CopyToBuffer((char*)arg->value_ptr, arg->string_size, "");
     }
 }
 
-static void reset_parser(ArgumentParser parser)
+static void ResetParser(ArgumentParser parser)
 {
     for (Arg* cur = parser->first; cur != nullptr; cur = cur->next)
     {
-        reset_arg(cur);
+        ResetArg(cur);
     }
 }
 
-static bool grow_values(Arg* arg)
+static bool GrowValues(Arg* arg)
 {
     if (arg->value_count < arg->value_capacity)
     {
@@ -222,7 +222,7 @@ static bool grow_values(Arg* arg)
     return true;
 }
 
-static bool parse_int_value(const char* text, int* value)
+static bool ParseIntValue(const char* text, int* value)
 {
     if (text == nullptr || value == nullptr || text[0] == '\0')
     {
@@ -240,7 +240,7 @@ static bool parse_int_value(const char* text, int* value)
     return true;
 }
 
-static bool parse_float_value(const char* text, float* value)
+static bool ParseFloatValue(const char* text, float* value)
 {
     if (text == nullptr || value == nullptr || text[0] == '\0')
     {
@@ -258,31 +258,31 @@ static bool parse_float_value(const char* text, float* value)
     return true;
 }
 
-static bool can_take_many(Arg* arg)
+static bool CanTakeMany(Arg* arg)
 {
     return arg->nargs == kNargsZeroOrMore || arg->nargs == kNargsOneOrMore;
 }
 
-static bool save_value(Arg* arg, const char* text)
+static bool SaveValue(Arg* arg, const char* text)
 {
     if (arg == nullptr || text == nullptr)
     {
         return false;
     }
 
-    if (!can_take_many(arg) && arg->value_count > 0)
+    if (!CanTakeMany(arg) && arg->value_count > 0)
     {
         return false;
     }
 
-    grow_values(arg);
+    GrowValues(arg);
 
     Value value = {};
 
-    if (arg->type == TYPE_INT)
+    if (arg->type == kTypeInt)
     {
         int x = 0;
-        if (!parse_int_value(text, &x))
+        if (!ParseIntValue(text, &x))
         {
             return false;
         }
@@ -292,10 +292,10 @@ static bool save_value(Arg* arg, const char* text)
         }
         value.int_value = x;
     }
-    else if (arg->type == TYPE_FLOAT)
+    else if (arg->type == kTypeFloat)
     {
         float x = 0.0f;
-        if (!parse_float_value(text, &x))
+        if (!ParseFloatValue(text, &x))
         {
             return false;
         }
@@ -305,7 +305,7 @@ static bool save_value(Arg* arg, const char* text)
         }
         value.float_value = x;
     }
-    else if (arg->type == TYPE_STRING)
+    else if (arg->type == kTypeString)
     {
         if (std::strlen(text) >= arg->string_size)
         {
@@ -315,7 +315,7 @@ static bool save_value(Arg* arg, const char* text)
         {
             return false;
         }
-        value.string_value = copy_text(text);
+        value.string_value = CopyText(text);
     }
     else
     {
@@ -328,34 +328,34 @@ static bool save_value(Arg* arg, const char* text)
 
     if (arg->value_ptr != nullptr && arg->value_count == 1)
     {
-        if (arg->type == TYPE_INT)
+        if (arg->type == kTypeInt)
         {
             *(int*)arg->value_ptr = value.int_value;
         }
-        else if (arg->type == TYPE_FLOAT)
+        else if (arg->type == kTypeFloat)
         {
             *(float*)arg->value_ptr = value.float_value;
         }
-        else if (arg->type == TYPE_STRING)
+        else if (arg->type == kTypeString)
         {
-            copy_to_buffer((char*)arg->value_ptr, arg->string_size, value.string_value);
+            CopyToBuffer((char*)arg->value_ptr, arg->string_size, value.string_value);
         }
     }
 
     return true;
 }
 
-static bool is_short_option(const char* text)
+static bool IsShortOption(const char* text)
 {
     return text != nullptr && text[0] == '-' && text[1] != '\0' && text[1] != '-';
 }
 
-static bool is_long_option(const char* text)
+static bool IsLongOption(const char* text)
 {
     return text != nullptr && text[0] == '-' && text[1] == '-' && text[2] != '\0';
 }
 
-static const char* cut_dashes(const char* text)
+static const char* CutDashes(const char* text)
 {
     if (text == nullptr)
     {
@@ -375,7 +375,7 @@ static const char* cut_dashes(const char* text)
     return text;
 }
 
-static Arg* find_named_arg(ArgumentParser parser, const char* text)
+static Arg* FindNamedArg(ArgumentParser parser, const char* text)
 {
     if (parser == nullptr || text == nullptr)
     {
@@ -383,7 +383,7 @@ static Arg* find_named_arg(ArgumentParser parser, const char* text)
     }
 
     const char* equal = std::strchr(text, '=');
-    const char* name = cut_dashes(text);
+    const char* name = CutDashes(text);
     int len = 0;
 
     if (equal != nullptr)
@@ -402,8 +402,8 @@ static Arg* find_named_arg(ArgumentParser parser, const char* text)
             continue;
         }
 
-        const char* short_name = cut_dashes(cur->short_name);
-        const char* long_name = cut_dashes(cur->long_name);
+        const char* short_name = CutDashes(cur->short_name);
+        const char* long_name = CutDashes(cur->long_name);
 
         if (cur->short_name[0] != '\0' &&
             (int)std::strlen(short_name) == len &&
@@ -423,7 +423,7 @@ static Arg* find_named_arg(ArgumentParser parser, const char* text)
     return nullptr;
 }
 
-static Arg* find_positional_arg(ArgumentParser parser, int index)
+static Arg* FindPositionalArg(ArgumentParser parser, int index)
 {
     int pos = 0;
     for (Arg* cur = parser->first; cur != nullptr; cur = cur->next)
@@ -443,7 +443,7 @@ static Arg* find_positional_arg(ArgumentParser parser, int index)
     return nullptr;
 }
 
-static Arg* find_arg_by_name(ArgumentParser parser, const char* name)
+static Arg* FindArgByName(ArgumentParser parser, const char* name)
 {
     for (Arg* cur = parser->first; cur != nullptr; cur = cur->next)
     {
@@ -463,7 +463,7 @@ ArgumentParser CreateParser(const char* name)
 ArgumentParser CreateParser(const char* name, std::size_t max_arg_len)
 {
     ArgumentParser parser = new Parser;
-    parser->program_name = copy_text(name);
+    parser->program_name = CopyText(name);
     parser->max_arg_len = max_arg_len == 0 ? kMaxArgLen : max_arg_len;
     parser->has_help = false;
     parser->first = nullptr;
@@ -481,7 +481,7 @@ void FreeParser(ArgumentParser parser)
     while (cur != nullptr)
     {
         Arg* next = cur->next;
-        clear_arg_values(cur);
+        ClearArgValues(cur);
         delete[] cur->values;
         delete[] cur->short_name;
         delete[] cur->long_name;
@@ -567,12 +567,12 @@ void AddFlag(ArgumentParser parser,
         return;
     }
 
-    Arg* arg = make_arg(TYPE_BOOL, short_name, long_name, description, description, false, kNargsOptional);
+    Arg* arg = MakeArg(kTypeBool, short_name, long_name, description, description, false, kNargsOptional);
     arg->is_flag = true;
     arg->default_flag_value = default_value;
     arg->value_ptr = flag;
     *flag = default_value;
-    add_arg(parser, arg);
+    AddArg(parser, arg);
 }
 
 void AddArgument(ArgumentParser parser,
@@ -587,11 +587,11 @@ void AddArgument(ArgumentParser parser,
         return;
     }
 
-    Arg* arg = make_arg(TYPE_INT, "", "", name, name, true, nargs);
+    Arg* arg = MakeArg(kTypeInt, "", "", name, name, true, nargs);
     arg->value_ptr = value;
     arg->int_validator = validator;
     (void)error_msg;
-    add_arg(parser, arg);
+    AddArg(parser, arg);
 }
 
 void AddArgument(ArgumentParser parser,
@@ -606,11 +606,11 @@ void AddArgument(ArgumentParser parser,
         return;
     }
 
-    Arg* arg = make_arg(TYPE_FLOAT, "", "", name, name, true, nargs);
+    Arg* arg = MakeArg(kTypeFloat, "", "", name, name, true, nargs);
     arg->value_ptr = value;
     arg->float_validator = validator;
     (void)error_msg;
-    add_arg(parser, arg);
+    AddArg(parser, arg);
 }
 
 void AddArgument(ArgumentParser parser,
@@ -625,12 +625,12 @@ void AddArgument(ArgumentParser parser,
         return;
     }
 
-    Arg* arg = make_arg(TYPE_STRING, "", "", name, name, true, nargs);
+    Arg* arg = MakeArg(kTypeString, "", "", name, name, true, nargs);
     arg->value_ptr = *value;
     arg->string_size = parser->max_arg_len;
     arg->string_validator = validator;
     (void)error_msg;
-    add_arg(parser, arg);
+    AddArg(parser, arg);
 }
 
 void AddArgument(ArgumentParser parser,
@@ -647,11 +647,11 @@ void AddArgument(ArgumentParser parser,
         return;
     }
 
-    Arg* arg = make_arg(TYPE_INT, short_name, long_name, name, name, false, nargs);
+    Arg* arg = MakeArg(kTypeInt, short_name, long_name, name, name, false, nargs);
     arg->value_ptr = value;
     arg->int_validator = validator;
     (void)error_msg;
-    add_arg(parser, arg);
+    AddArg(parser, arg);
 }
 
 void AddArgument(ArgumentParser parser,
@@ -668,11 +668,11 @@ void AddArgument(ArgumentParser parser,
         return;
     }
 
-    Arg* arg = make_arg(TYPE_FLOAT, short_name, long_name, name, name, false, nargs);
+    Arg* arg = MakeArg(kTypeFloat, short_name, long_name, name, name, false, nargs);
     arg->value_ptr = value;
     arg->float_validator = validator;
     (void)error_msg;
-    add_arg(parser, arg);
+    AddArg(parser, arg);
 }
 
 void AddArgument(ArgumentParser parser,
@@ -689,12 +689,12 @@ void AddArgument(ArgumentParser parser,
         return;
     }
 
-    Arg* arg = make_arg(TYPE_STRING, short_name, long_name, name, name, false, nargs);
+    Arg* arg = MakeArg(kTypeString, short_name, long_name, name, name, false, nargs);
     arg->value_ptr = *value;
     arg->string_size = parser->max_arg_len;
     arg->string_validator = validator;
     (void)error_msg;
-    add_arg(parser, arg);
+    AddArg(parser, arg);
 }
 
 bool Parse(ArgumentParser parser, int argc, const char* argv[])
@@ -704,7 +704,7 @@ bool Parse(ArgumentParser parser, int argc, const char* argv[])
         return false;
     }
 
-    reset_parser(parser);
+    ResetParser(parser);
 
     for (int i = 1; i < argc; i++)
     {
@@ -722,9 +722,9 @@ bool Parse(ArgumentParser parser, int argc, const char* argv[])
         const char* token = argv[i];
 
         Arg* cur = nullptr;
-        if (is_short_option(token) || is_long_option(token))
+        if (IsShortOption(token) || IsLongOption(token))
         {
-            cur = find_named_arg(parser, token);
+            cur = FindNamedArg(parser, token);
         }
 
         if (cur != nullptr)
@@ -753,25 +753,25 @@ bool Parse(ArgumentParser parser, int argc, const char* argv[])
                 value_text = argv[i];
             }
 
-            if (!save_value(cur, value_text))
+            if (!SaveValue(cur, value_text))
             {
                 return false;
             }
             continue;
         }
 
-        Arg* pos = find_positional_arg(parser, positional_index);
+        Arg* pos = FindPositionalArg(parser, positional_index);
         if (pos == nullptr)
         {
             return false;
         }
 
-        if (!save_value(pos, token))
+        if (!SaveValue(pos, token))
         {
             return false;
         }
 
-        if (!can_take_many(pos))
+        if (!CanTakeMany(pos))
         {
             positional_index++;
         }
@@ -805,7 +805,7 @@ bool Parse(ArgumentParser parser, int argc, char* argv[])
 
 int GetRepeatedCount(ArgumentParser parser, const char* name)
 {
-    Arg* arg = find_arg_by_name(parser, name);
+    Arg* arg = FindArgByName(parser, name);
     if (arg == nullptr)
     {
         return 0;
@@ -815,8 +815,8 @@ int GetRepeatedCount(ArgumentParser parser, const char* name)
 
 bool GetRepeated(ArgumentParser parser, const char* name, int index, int* value)
 {
-    Arg* arg = find_arg_by_name(parser, name);
-    if (arg == nullptr || arg->type != TYPE_INT || value == nullptr)
+    Arg* arg = FindArgByName(parser, name);
+    if (arg == nullptr || arg->type != kTypeInt || value == nullptr)
     {
         return false;
     }
@@ -831,8 +831,8 @@ bool GetRepeated(ArgumentParser parser, const char* name, int index, int* value)
 
 bool GetRepeated(ArgumentParser parser, const char* name, int index, float* value)
 {
-    Arg* arg = find_arg_by_name(parser, name);
-    if (arg == nullptr || arg->type != TYPE_FLOAT || value == nullptr)
+    Arg* arg = FindArgByName(parser, name);
+    if (arg == nullptr || arg->type != kTypeFloat || value == nullptr)
     {
         return false;
     }
@@ -847,8 +847,8 @@ bool GetRepeated(ArgumentParser parser, const char* name, int index, float* valu
 
 bool GetRepeated(ArgumentParser parser, const char* name, int index, const char** value)
 {
-    Arg* arg = find_arg_by_name(parser, name);
-    if (arg == nullptr || arg->type != TYPE_STRING || value == nullptr)
+    Arg* arg = FindArgByName(parser, name);
+    if (arg == nullptr || arg->type != kTypeString || value == nullptr)
     {
         return false;
     }
@@ -859,6 +859,6 @@ bool GetRepeated(ArgumentParser parser, const char* name, int index, const char*
 
     *value = arg->values[index].string_value;
     return true;
-}
+}  // namespace nargparse
 
 }
